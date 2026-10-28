@@ -1,0 +1,143 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>ConsentChain</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bd:#243070;--tx:#e8ecff;--mu:#8c97c9;--bl:#4f7cff;--pk:#e0457b;--pe:#f0b79a;--gr:#34d399;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}
+body{font-family:Inter,system-ui,sans-serif;background:radial-gradient(ellipse at 70% 0,#14206b 0,#0b1140 40%,#050a24 100%) fixed;color:var(--tx);font-size:14px}
+h1,h2,h3,p{margin:0}.mu{color:var(--mu);font-size:12px}
+.card{background:linear-gradient(160deg,#0f1748,#0a1038);border:1px solid var(--bd);border-radius:18px;padding:18px;box-shadow:0 0 30px #0a122f;margin-bottom:16px}
+.btn{border:1px solid var(--bd);background:#131c5a;color:var(--tx);border-radius:999px;padding:8px 16px;font:inherit;font-weight:500;cursor:pointer;transition:.2s}
+.btn:hover{border-color:var(--bl);box-shadow:0 0 14px #4f7cff55}.pr{background:var(--bl);border-color:var(--bl)}.dg{color:#ff8fb3;border-color:#6b2a4a}.sm{padding:4px 11px;font-size:12px}
+input,select,textarea{width:100%;background:#0a1038;border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:9px 12px;font:inherit}
+input[type=checkbox]{width:auto}label{display:block;margin:12px 0 5px;color:var(--mu);font-size:12px}
+.err{color:#ff8fb3;font-size:12px;margin-top:4px}
+.pill{padding:2px 10px;border-radius:99px;font-size:11px;font-weight:600}
+.s-active{background:#0f3a40;color:#6fe0b0}.s-expired{background:#4a3a3a;color:var(--pe)}.s-revoked{background:#4a1a3a;color:#ff8fb3}
+.wrap{max-width:900px;margin:0 auto;padding:40px 18px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:30px}.pc{cursor:pointer;text-align:left;transition:.2s}.pc:hover{border-color:var(--bl);transform:translateY(-3px)}
+.ic{width:46px;height:46px;border-radius:14px;background:#17236f;display:grid;place-items:center;margin-bottom:12px}
+.ic svg{width:24px;height:24px;stroke:#7fa0ff;fill:none;stroke-width:2}
+.logo{font-weight:700;font-size:20px;letter-spacing:.3px}.logo b{color:var(--bl)}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}.side{padding:18px;border-right:1px solid var(--bd)}
+.nav{display:block;width:100%;text-align:left;background:none;border:0;color:var(--mu);padding:10px 12px;border-radius:10px;font:inherit;cursor:pointer;margin-top:4px}
+.nav.on,.nav:hover{background:#17236f;color:#fff}.main{padding:20px;min-width:0}
+.top{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px}.top .sp{flex:1}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--bl),var(--pk));display:grid;place-items:center;font-weight:700}
+.g2{display:grid;grid-template-columns:300px 1fr;gap:16px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat{background:#0d1445;border:1px solid var(--bd);border-radius:14px;padding:14px}.stat b{display:block;font-size:24px;margin-top:4px}
+.bar{height:6px;background:#1a2260;border-radius:9px;margin:6px 0 12px}.bar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--bl),var(--pk))}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #1a2260;font-size:13px}th{color:var(--mu);font-weight:500}.ov{overflow-x:auto}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:130px}.tl{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #1a2260}.dot{width:10px;height:10px;border-radius:50%;margin-top:5px;flex:none}
+#modal{position:fixed;inset:0;background:#000a;display:none;place-items:center;z-index:9;padding:16px}#modal>div{max-width:520px;width:100%;max-height:85vh;overflow:auto}
+#toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#17236f;border:1px solid var(--bl);padding:10px 18px;border-radius:99px;display:none;z-index:10}
+.dec{border-radius:16px;padding:20px;margin-top:16px;border:1px solid}.ok{background:#0b3a3a;border-color:var(--gr)}.no{background:#3a0f2a;border-color:var(--pk)}
+@media(max-width:820px){.app,.g2,.two{grid-template-columns:1fr}.side{border:0;display:flex;overflow-x:auto;gap:6px;align-items:center}.side .logo,.side .mu{display:none}.nav{width:auto;white-space:nowrap}.stats{grid-template-columns:1fr 1fr}}
+</style></head><body><div id="app"></div><div id="modal"></div><div id="toast"></div>
+<script>
+const DAY=864e5,HR=36e5,CATS=['Health Record','Financial Data','Location','Contact Info','Education Record'];
+const DURS=[[HR,'1 hour'],[DAY,'24 hours'],[7*DAY,'7 days'],[30*DAY,'30 days']];
+const NAV=[['overview','◉ Overview'],['grant','＋ Grant Access'],['perms','☰ My Permissions'],['verify','✓ Verify Access'],['hist','⏱ Consent History'],['sec','⚙ Security Settings']];
+const S={view:'welcome',sec:'overview',pid:null,d:null,q:'',fs:'all',fc:'all',so:'new',ft:'all',hq:''};
+const $=s=>document.querySelector(s),mem={};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LS={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return mem[k]||null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){mem[k]=v}},del(k){try{localStorage.removeItem(k)}catch(e){delete mem[k]}}};
+const now=()=>Date.now()+(S.d?S.d.off:0);
+const fmt=t=>new Date(t).toLocaleString([],{dateStyle:'medium',timeStyle:'short'});
+const left=t=>{let x=t-now();if(x<=0)return'Expired';const d=x/DAY|0,h=x%DAY/HR|0,m=x%HR/6e4|0,s=x%6e4/1e3|0;return d?`${d}d ${h}h`:h?`${h}h ${m}m`:`${m}m ${s}s`};
+const pill=s=>`<span class="pill s-${s}">${s}</span>`,opts=(a,s)=>a.map(x=>`<option ${x==s?'selected':''}>${x}</option>`).join('');
+const durOpts=v=>DURS.map(([n,l])=>`<option value="${n}" ${n==v?'selected':''}>${l}</option>`).join('');
+const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',2600)};
+const modal=h=>{$('#modal').innerHTML=`<div class="card">${h}<div style="text-align:right;margin-top:12px"><button class="btn" onclick="closeM()">Close</button></div></div>`;$('#modal').style.display='grid'};
+const closeM=()=>$('#modal').style.display='none';
+/* ---------- services (storage + ledger) ---------- */
+const Svc={profiles:()=>LS.get('cc:profiles')||[],saveP:p=>LS.set('cc:profiles',p),save:d=>LS.set('cc:d:'+d.pid,d),load:id=>LS.get('cc:d:'+id)};
+const blank=pid=>({pid,off:0,consents:[],audit:[],set:{confirm:true,notify:true,dur:DAY}});
+async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+let Q=Promise.resolve();const enq=f=>(Q=Q.then(f).catch(console.error));
+const hs=e=>JSON.stringify([e.id,e.type,e.cid,e.org,e.cat,e.detail,e.ts,e.prev]);
+const ev=(d,type,c,detail,ts)=>enq(async()=>{const e={id:crypto.randomUUID().slice(0,8),type,cid:c?c.id:'-',org:c?c.org:'',cat:c?c.cat:'',detail,ts:ts||now(),prev:d.audit.length?d.audit[d.audit.length-1].hash:'GENESIS'};e.hash=await sha(hs(e));d.audit.push(e);Svc.save(d)});
+async function verifyLedger(d){let p='GENESIS';for(let i=0;i<d.audit.length;i++){const e=d.audit[i];if(e.prev!==p||await sha(hs(e))!==e.hash)return i+1;p=e.hash}return 0}
+async function seedDemo(){const t=Date.now(),d=blank('demo'),L=[];
+const mk=(org,cat,purpose,perm,ago,dur,st,rv)=>{const c={id:crypto.randomUUID().slice(0,8),org,cat,purpose,perm,created:t-ago,expires:t-ago+dur,status:st};d.consents.push(c);L.push([c.created,'Granted',c,perm+' access granted']);
+if(st==='expired'){c.expiredAt=c.expires;L.push([c.expires,'Expired',c,'Time limit reached'])}if(st==='revoked'){c.revokedAt=t-rv;L.push([t-rv,'Revoked',c,'Revoked by user'])}return c};
+const a=mk('Northwind Health','Health Record','Annual checkup sharing','Read',2*DAY,30*DAY,'active'),b=mk('Aurora Bank','Financial Data','Loan pre-approval','Read',3*DAY,7*DAY,'active'),
+c=mk('BrightPath University','Education Record','Scholarship review','Read+Share',10*DAY,7*DAY,'expired'),r=mk('Orbit Fitness','Location','Route tracking','Read',5*DAY,30*DAY,'revoked',DAY);
+mk('Lumen Telecom','Contact Info','Plan renewal offers','Read',DAY,HR,'expired');mk('Vertex Insurance','Health Record','Premium quote','Read',4*HR,DAY,'active');
+L.push([t-1.5*DAY,'Access Allowed',a,'Consent active'],[t-20*HR,'Access Denied',c,'Consent expired'],[t-6*HR,'Access Allowed',b,'Consent active'],[t-2*HR,'Access Denied',r,'Consent revoked'],[t-3*DAY,'Extended',b,'Extended by 24 hours']);
+L.sort((x,y)=>x[0]-y[0]);for(const x of L)await ev(d,x[1],x[2],x[3],x[0]);Svc.save(d);return d}
+function expire(){const d=S.d;if(!d)return false;let ch=false;d.consents.forEach(c=>{if(c.status==='active'&&c.expires<=now()){c.status='expired';c.expiredAt=now();ch=true;ev(d,'Expired',c,'Time limit reached');if(d.set.notify)toast('Consent expired: '+c.org)}});if(ch)Svc.save(d);return ch}
+setInterval(()=>{if(expire())enq(()=>render());else document.querySelectorAll('[data-x]').forEach(e=>e.textContent=left(+e.dataset.x))},1000);
+/* ---------- navigation ---------- */
+async function openProfile(id){let d=Svc.load(id);if(!d)d=id==='demo'?await seedDemo():blank(id);S.pid=id;S.d=d;S.view='app';S.sec='overview';expire();render()}
+const goW=()=>{S.view='welcome';S.d=null;render()},go=s=>{S.sec=s;S.q='';S.hq='';render()};
+const allP=()=>[{id:'demo',name:'Demo Profile',email:'demo@consentchain.example'},...Svc.profiles()];
+const prof=()=>allP().find(p=>p.id===S.pid);
+function render(){const a=$('#app');a.innerHTML=S.view==='welcome'?welcome():S.view==='create'?create():shell()}
+/* ---------- screens ---------- */
+const UI={u:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',p:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>'};
+const welcome=()=>{const sp=Svc.profiles();return`<div class="wrap"><div class="logo">Consent<b>Chain</b></div><h1 style="font-size:clamp(28px,5vw,46px);margin:34px 0 12px">Your Data. Your Consent. Your Control.</h1><p class="mu" style="font-size:15px">Manage permissions, control access, and keep every consent decision traceable.</p>
+<div class="two"><div class="card pc" onclick="openProfile('demo')"><div class="ic"><svg viewBox="0 0 24 24">${UI.u}</svg></div><h2>Demo Profile</h2><p class="mu" style="margin:8px 0 16px;font-size:13px">Explore ConsentChain with preloaded sample consents, organizations, permissions, and audit history.</p><button class="btn pr">Explore Demo →</button></div>
+<div class="card pc" onclick="S.view='create';render()"><div class="ic"><svg viewBox="0 0 24 24">${UI.p}</svg></div><h2>Create New Profile</h2><p class="mu" style="margin:8px 0 16px;font-size:13px">Create your own profile and start managing data-sharing permissions from scratch.</p><button class="btn pr">Create Profile →</button></div></div>
+${sp.length?`<div class="card" style="text-align:left"><h3>Saved profiles</h3>${sp.map(p=>`<div class="tl" style="align-items:center"><div class="av">${esc(p.name[0]).toUpperCase()}</div><div style="flex:1"><b>${esc(p.name)}</b><div class="mu">${esc(p.email)}</div></div><button class="btn sm" onclick="openProfile('${p.id}')">Open →</button></div>`).join('')}</div>`:''}
+<p class="mu" style="margin-top:30px">Hackathon Prototype · Consent management demonstration</p></div>`};
+const create=()=>`<div class="wrap" style="max-width:480px;text-align:left"><button class="btn sm" onclick="goW()">← Back to Welcome</button><h1 style="margin:22px 0 6px">Create Your Profile</h1><p class="mu">Set up your personal ConsentChain workspace.</p>
+<form class="card" style="margin-top:20px" onsubmit="doCreate(event)" novalidate><label>Full Name</label><input id="cn" autocomplete="name"><div class="err" id="en"></div><label>Email Address</label><input id="ce" type="email" autocomplete="email"><div class="err" id="ee"></div><button class="btn pr" style="margin-top:18px">Create My Profile →</button></form></div>`;
+function doCreate(e){e.preventDefault();const n=$('#cn').value.trim(),m=$('#ce').value.trim();let ok=true;
+$('#en').textContent=n?'':(ok=false,'Full name is required');$('#ee').textContent=!m?(ok=false,'Email is required'):/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(m)?'':(ok=false,'Enter a valid email address');if(!ok)return;
+const id=crypto.randomUUID(),p=Svc.profiles();p.push({id,name:n,email:m});Svc.saveP(p);Svc.save(blank(id));toast('Profile created');openProfile(id)}
+function shell(){const d=S.d,p=prof()||{name:'?',email:''},demo=S.pid==='demo';
+const body={overview,grant,perms,verify,hist,sec}[S.sec](d);
+return`<div class="app"><div class="side"><div class="logo">Consent<b>Chain</b></div>${NAV.map(([k,l])=>`<button class="nav ${S.sec==k?'on':''}" onclick="go('${k}')">${l}</button>`).join('')}<p class="mu" style="margin-top:24px">Simulated tamper-evident hash-chained ledger stored locally. Not a public blockchain.</p></div>
+<div class="main"><div class="top"><div class="av">${esc(p.name[0]).toUpperCase()}</div><div><b>${esc(p.name)}</b><div class="mu">${esc(p.email)}</div></div>${demo?'<span class="pill s-expired">Fictional demo data</span>':''}<span class="sp"></span>
+<select style="width:auto" onchange="openProfile(this.value)">${allP().map(x=>`<option value="${x.id}" ${x.id==S.pid?'selected':''}>${esc(x.name)}</option>`).join('')}</select><button class="btn sm" onclick="goW()">Back to Profiles</button></div>
+<div class="card row" style="align-items:center;padding:10px 14px"><span class="mu" style="flex:2">Simulate time${d.off?` · now +${(d.off/HR).toFixed(0)}h`:''}</span><button class="btn sm" onclick="simT(HR)">+1 hour</button><button class="btn sm" onclick="simT(DAY)">+1 day</button><button class="btn sm" onclick="simT(0)">Reset time</button></div>${body}</div></div>`}
+function simT(ms){const d=S.d;d.off=ms?d.off+ms:0;Svc.save(d);expire();enq(()=>render());toast(ms?'Time moved forward':'Time reset')}
+function overview(d){const act=d.consents.filter(c=>c.status==='active'),soon=act.filter(c=>c.expires-now()<DAY).length,rev=d.consents.filter(c=>c.status==='revoked').length,chk=d.audit.filter(e=>e.type.startsWith('Access')).length;
+const og={};d.consents.forEach(c=>og[c.org]=(og[c.org]||0)+1);const ol=Object.entries(og).sort((a,b)=>b[1]-a[1]).slice(0,5),mx=ol.length?ol[0][1]:1;
+const col=['#4f7cff','#e0457b','#f0b79a','#8c97c9'],nm=['Grants','Revocations','Expiries','Access checks'],cnt=Array.from({length:14},()=>[0,0,0,0]);
+d.audit.forEach(e=>{const b=Math.floor((now()-e.ts)/DAY);if(b<0||b>13)return;cnt[13-b][/Grant|Extend/.test(e.type)?0:e.type==='Revoked'?1:e.type==='Expired'?2:3]++});
+let ln='';cnt.forEach((c,i)=>c.forEach((n,k)=>{if(!n)return;ln+=`<line x1="180" y1="116" x2="180" y2="${116-10-Math.min(n,6)*13}" stroke="${col[k]}" stroke-width="5" stroke-linecap="round" transform="rotate(${i*360/14+(k-1.5)*5} 180 180)"><title>${nm[k]}: ${n} (${13-i}d ago)</title></line>`}));
+const rec=d.audit.slice(-5).reverse();
+return`<div class="g2"><div><div class="card"><h3>Top Organizations</h3><p class="mu" style="margin-bottom:14px">Consents by organization</p>${ol.map(([o,n])=>`<div style="display:flex;justify-content:space-between"><span>${esc(o)}</span><span class="mu">${n}</span></div><div class="bar"><i style="width:${n/mx*100}%"></i></div>`).join('')||'<p class="mu">No consents yet. Grant access to get started.</p>'}</div>
+<div class="card"><h3>Recent Activity</h3>${rec.map(e=>`<div class="tl"><span class="dot" style="background:${evc(e.type)}"></span><div><b>${e.type}</b> <span class="mu">${esc(e.org)}</span><div class="mu">${fmt(e.ts)}</div></div></div>`).join('')||'<p class="mu" style="margin-top:8px">No audit events yet.</p>'}</div></div>
+<div class="card"><h3>Consent Activity</h3><p class="mu">Last 14 days, clockwise from the top. Hover for details.</p><svg viewBox="0 0 360 360" style="width:100%;max-width:420px;display:block;margin:auto"><circle cx="180" cy="180" r="170" fill="none" stroke="#243070" stroke-dasharray="3 6"/><circle cx="180" cy="180" r="62" fill="#070c30" stroke="#243070"/>${ln}<text x="180" y="178" text-anchor="middle" fill="#e8ecff" font-size="22" font-weight="700">${d.audit.length}</text><text x="180" y="196" text-anchor="middle" fill="#8c97c9" font-size="10">AUDIT EVENTS</text></svg>
+<div class="row mu" style="justify-content:center">${nm.map((n,k)=>`<span style="flex:none"><span class="dot" style="background:${col[k]};display:inline-block"></span> ${n}</span>`).join('')}</div>
+<div class="stats" style="margin-top:18px">${[['Active Consents',act.length],['Expiring Soon',soon],['Revoked',rev],['Access Checks',chk]].map(([l,v])=>`<div class="stat"><span class="mu">${l}</span><b>${v}</b></div>`).join('')}</div></div></div>`}
+const evc=t=>({Granted:'#4f7cff',Extended:'#4f7cff',Revoked:'#e0457b',Expired:'#f0b79a','Access Allowed':'#34d399','Access Denied':'#ff6b6b'}[t]);
+const grant=d=>`<form class="card" style="max-width:560px" onsubmit="doGrant(event)"><h2>Grant Access</h2><p class="mu">Create a time-limited consent.</p><label>Organization</label><input id="go" placeholder="e.g. Northwind Health"><div class="err" id="ego"></div><label>Data category</label><select id="gc">${opts(CATS)}</select><label>Purpose</label><input id="gp" placeholder="Why do they need it?"><label>Permission level</label><select id="gm">${opts(['Read','Read+Share'])}</select><label>Duration</label><select id="gd" onchange="$('#gx').style.display=this.value=='c'?'block':'none'">${durOpts(d.set.dur)}<option value="c">Custom date and time</option></select><input id="gx" type="datetime-local" style="display:none;margin-top:8px"><div class="err" id="egx"></div><button class="btn pr" style="margin-top:18px">Grant Access →</button></form>`;
+async function doGrant(e){e.preventDefault();const d=S.d,org=$('#go').value.trim(),dv=$('#gd').value;let ex;$('#ego').textContent=org?'':'Organization is required';if(!org)return;
+if(dv==='c'){ex=new Date($('#gx').value).getTime();if(!ex||ex<=now()){$('#egx').textContent='Pick a future date and time';return}}else ex=now()+ +dv;
+const c={id:crypto.randomUUID().slice(0,8),org,cat:$('#gc').value,purpose:$('#gp').value.trim()||'Not specified',perm:$('#gm').value,created:now(),expires:ex,status:'active'};d.consents.push(c);await ev(d,'Granted',c,c.perm+' access until '+fmt(ex));toast('Access granted to '+org);S.sec='perms';render()}
+const perms=d=>`<div class="card"><h2>My Permissions</h2><div class="row" style="margin:14px 0"><input placeholder="Search organization or data type" value="${esc(S.q)}" oninput="S.q=this.value;pl()" style="flex:2"><select onchange="S.fs=this.value;pl()">${['all','active','expired','revoked'].map(x=>`<option ${S.fs==x?'selected':''}>${x}</option>`).join('')}</select><select onchange="S.fc=this.value;pl()">${['all',...CATS].map(x=>`<option ${S.fc==x?'selected':''}>${x}</option>`).join('')}</select><select onchange="S.so=this.value;pl()"><option value="new" ${S.so=='new'?'selected':''}>Newest</option><option value="exp" ${S.so=='exp'?'selected':''}>Expiring soonest</option><option value="org" ${S.so=='org'?'selected':''}>Organization A-Z</option></select></div><div class="ov" id="pl">${plist(d)}</div></div>`;
+const pl=()=>$('#pl').innerHTML=plist(S.d);
+function plist(d){const q=S.q.toLowerCase();let a=d.consents.filter(c=>(S.fs=='all'||c.status==S.fs)&&(S.fc=='all'||c.cat==S.fc)&&(c.org+c.cat).toLowerCase().includes(q));
+a.sort((x,y)=>S.so=='org'?x.org.localeCompare(y.org):S.so=='exp'?x.expires-y.expires:y.created-x.created);if(!a.length)return'<p class="mu">No consents match. Try changing filters or grant new access.</p>';
+return`<table><tr><th>Organization</th><th>Data</th><th>Level</th><th>Status</th><th>Time left</th><th></th></tr>${a.map(c=>`<tr><td><b>${esc(c.org)}</b></td><td>${c.cat}</td><td>${c.perm}</td><td>${pill(c.status)}</td><td>${c.status=='active'?`<span data-x="${c.expires}">${left(c.expires)}</span>`:'-'}</td><td style="white-space:nowrap"><button class="btn sm" onclick="det('${c.id}')">Details</button> ${c.status=='active'?`<button class="btn sm" onclick="extend('${c.id}')">Extend</button> <button class="btn sm dg" onclick="askRev('${c.id}')">Revoke</button>`:''}</td></tr>`).join('')}</table>`}
+const gc=id=>S.d.consents.find(c=>c.id==id);
+function askRev(id){if(!S.d.set.confirm)return rv(id);const c=gc(id);modal(`<h3>Revoke access?</h3><p class="mu" style="margin-top:8px">${esc(c.org)} will immediately lose access to ${c.cat}.</p><button class="btn dg" style="margin-top:12px" onclick="rv('${id}')">Yes, revoke</button>`)}
+async function rv(id){closeM();const c=gc(id);c.status='revoked';c.revokedAt=now();await ev(S.d,'Revoked',c,'Revoked by user');toast('Consent revoked');render()}
+async function extend(id){const c=gc(id);c.expires+=DAY;await ev(S.d,'Extended',c,'Extended by 24 hours, now until '+fmt(c.expires));toast('Extended by 24 hours');render()}
+function det(id){const c=gc(id),es=S.d.audit.filter(e=>e.cid==id);modal(`<h3>${esc(c.org)}</h3><p class="mu">${pill(c.status)} · ${c.cat} · ${c.perm}</p><p style="margin:10px 0">Purpose: ${esc(c.purpose)}</p><p class="mu">Granted ${fmt(c.created)}<br>Expires ${fmt(c.expires)}${c.revokedAt?'<br>Revoked '+fmt(c.revokedAt):''}</p><h3 style="margin-top:14px">Events</h3>${es.map(e=>`<div class="mu">${fmt(e.ts)} · ${e.type}</div>`).join('')}`)}
+const verify=d=>`<div class="card" style="max-width:560px"><h2>Verify Access</h2><p class="mu">Ask: does this organization currently have access?</p><label>Organization</label><input id="vo" list="ol" placeholder="Organization name"><datalist id="ol">${[...new Set(d.consents.map(c=>c.org))].map(o=>`<option value="${esc(o)}">`).join('')}</datalist><label>Data category</label><select id="vc">${opts(CATS)}</select><button class="btn pr" style="margin-top:16px" onclick="doVerify()">Check Access →</button><div id="vres"></div></div>`;
+async function doVerify(){const d=S.d,o=$('#vo').value.trim().toLowerCase(),cat=$('#vc').value;if(!o){toast('Enter an organization');return}
+const m=d.consents.filter(c=>c.org.toLowerCase()==o&&c.cat==cat).sort((a,b)=>b.created-a.created),a=m.find(c=>c.status=='active'),l=a||m[0];let ok=!!a,why;
+if(a)why=`Active consent until ${fmt(a.expires)} (${a.perm}).`;else if(!l)why='No consent exists for this organization and data category.';else if(l.status=='revoked')why=`Consent was revoked at ${fmt(l.revokedAt)}.`;else why=`Consent expired at ${fmt(l.expiredAt||l.expires)}.`;
+await ev(d,ok?'Access Allowed':'Access Denied',l||{id:'-',org:$('#vo').value.trim(),cat},why);$('#vres').innerHTML=`<div class="dec ${ok?'ok':'no'}"><h2>${ok?'✓ ALLOW':'✕ DENY'}</h2><p style="margin-top:6px">${why}</p><p class="mu" style="margin-top:8px">Logged to the audit history.</p></div>`}
+const hist=d=>`<div class="card"><h2>Consent History</h2><div class="row" style="margin:14px 0"><input placeholder="Search history" value="${esc(S.hq)}" oninput="S.hq=this.value;hl()" style="flex:2"><select onchange="S.ft=this.value;hl()">${['all','Granted','Extended','Revoked','Expired','Access Allowed','Access Denied'].map(x=>`<option ${S.ft==x?'selected':''}>${x}</option>`).join('')}</select><button class="btn sm" onclick="exp('json')">Export JSON</button><button class="btn sm" onclick="exp('csv')">Export CSV</button></div><div id="hl">${hlist(d)}</div></div>`;
+const hl=()=>$('#hl').innerHTML=hlist(S.d);
+const hlist=d=>{const q=S.hq.toLowerCase(),a=d.audit.filter(e=>(S.ft=='all'||e.type==S.ft)&&(e.org+e.cat+e.detail+e.type).toLowerCase().includes(q)).reverse();return a.map(e=>`<div class="tl"><span class="dot" style="background:${evc(e.type)}"></span><div style="flex:1"><b>${e.type}</b> · ${esc(e.org)} <span class="mu">${e.cat}</span><div class="mu">${esc(e.detail)}</div><div class="mu">${fmt(e.ts)} · hash ${e.hash.slice(0,10)}…</div></div></div>`).join('')||'<p class="mu">No audit events to show.</p>'};
+function exp(k){const d=S.d;let t=k=='json'?JSON.stringify({profile:prof(),consents:d.consents,audit:d.audit},null,2):'id,type,organization,category,detail,time,hash\n'+d.audit.map(e=>[e.id,e.type,e.org,e.cat,e.detail,new Date(e.ts).toISOString(),e.hash].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');
+window._ex=t;modal(`<h3>Export ${k.toUpperCase()}</h3><p class="mu">Copy the data below, or select all and copy manually.</p><textarea id="exa" rows="10" readonly style="margin-top:10px;font-size:12px">${esc(t)}</textarea><button class="btn pr sm" style="margin-top:8px" onclick="cp()">Copy to clipboard</button>`)}
+function cp(){const a=$('#exa');a.select();try{navigator.clipboard.writeText(window._ex).then(()=>toast('Copied'),()=>{document.execCommand('copy');toast('Copied')})}catch(e){document.execCommand('copy');toast('Copied')}}
+const sec=d=>`<div class="card" style="max-width:620px"><h2>Security Settings</h2><label><input type="checkbox" ${d.set.notify?'checked':''} onchange="S.d.set.notify=this.checked;Svc.save(S.d)"> Notify me when a consent expires</label><label><input type="checkbox" ${d.set.confirm?'checked':''} onchange="S.d.set.confirm=this.checked;Svc.save(S.d)"> Require confirmation before revoking</label><label>Default consent duration</label><select onchange="S.d.set.dur=+this.value;Svc.save(S.d)">${durOpts(d.set.dur)}</select></div>
+<div class="card" style="max-width:620px"><h3>Audit ledger</h3><p class="mu" style="margin:6px 0 12px">Simulated tamper-evident hash-chained ledger stored locally. Not a public blockchain. ${d.audit.length} events.</p><button class="btn pr" onclick="doLedger()">Verify Ledger Integrity</button> ${S.pid=='demo'?'<button class="btn dg" onclick="tamper()">Tamper test (demo)</button>':''}<div id="lres" style="margin-top:12px"></div></div>
+<div class="card" style="max-width:620px"><h3>Profile data</h3><div class="row" style="margin-top:12px"><button class="btn dg" onclick="askReset()">Reset this profile data</button>${S.pid!='demo'?'<button class="btn dg" onclick="askDel()">Delete profile</button>':''}</div></div>`;
+async function doLedger(){await Q;const i=await verifyLedger(S.d);$('#lres').innerHTML=i?`<span class="pill s-revoked">Tampered at block ${i}</span>`:`<span class="pill s-active">Valid: all ${S.d.audit.length} blocks verified</span>`}
+function tamper(){const a=S.d.audit;if(!a.length)return;a[a.length>>1].detail+=' (edited)';Svc.save(S.d);toast('An event was edited. Now verify the ledger.')}
+const askReset=()=>modal(`<h3>Reset profile data?</h3><p class="mu" style="margin-top:8px">${S.pid=='demo'?'Demo data will be restored to its original state.':'All consents and audit events of this profile will be erased.'}</p><button class="btn dg" style="margin-top:12px" onclick="doReset()">Yes, reset</button>`);
+async function doReset(){closeM();S.d=S.pid=='demo'?await seedDemo():blank(S.pid);Svc.save(S.d);toast('Profile data reset');render()}
+const askDel=()=>modal(`<h3>Delete this profile?</h3><p class="mu" style="margin-top:8px">The profile and all its data will be removed from this browser.</p><button class="btn dg" style="margin-top:12px" onclick="doDel()">Yes, delete</button>`);
+function doDel(){closeM();Svc.saveP(Svc.profiles().filter(p=>p.id!=S.pid));LS.del('cc:d:'+S.pid);toast('Profile deleted');goW()}
+render();
+</script></body></html>
